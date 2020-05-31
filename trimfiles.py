@@ -8,6 +8,9 @@ from datetime import datetime
 from datetime import date
 from collections import defaultdict
 
+# print('\033[31m' + 'some red text')
+# sys.exit(1)
+
 def generateFilesPerDayForHalvingPattern(k, extend=False):
     filesPerDay = []
 
@@ -90,6 +93,10 @@ def hello(deletefiles, filepattern):
         # with open(fname, "r") as f:
 
 if __name__ == '__main__':
-    # hello(filepattern="Sadfsdfds")
-    hello()
+    # hack to call ourselves with some test arguments when run directly from sublime text without args
+    if sys.argv == 1:
+        # os.system("python trimfiles.py 'testFiles/**/*.txt'")
+        os.system("python trimfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+    else:
+        hello()
     # invoke(hello, args=['--filepattern', 'grimp'])
