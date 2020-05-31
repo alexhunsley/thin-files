@@ -6,6 +6,31 @@ import os
 import time
 from datetime import datetime
 from datetime import date
+from collections import defaultdict
+
+def generateFilesPerDayForHalvingPattern(k, extend=False):
+    filesPerDay = []
+
+    multiple = 1
+
+    while True:
+        filesPerDay += [k] * multiple
+
+        if extend:
+            multiple *= 2
+
+        k //= 2
+        if k == 0:
+            break
+
+    return filesPerDay
+
+print(generateFilesPerDayForHalvingPattern(8))
+print(generateFilesPerDayForHalvingPattern(7, extend=True))
+print(generateFilesPerDayForHalvingPattern(6, extend=True))
+print(generateFilesPerDayForHalvingPattern(5, extend=True))
+print(generateFilesPerDayForHalvingPattern(1, extend=True))
+sys.exit(1)
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
@@ -42,6 +67,11 @@ def hello(deletefiles, filepattern):
     print("Del files:", deletefiles)
 
     found_files = glob(filepattern, recursive=True)
+
+    found_files.sort(key=os.path.getmtime, reverse=True)
+
+    dayAgeToFilepath = defaultdict(list)
+
     for fname in found_files:
         file_mod_time = os.path.getmtime(fname)
         file_mod_local_time = time.localtime(file_mod_time)
@@ -52,6 +82,11 @@ def hello(deletefiles, filepattern):
         delta_days = now_date - file_date
 
         print(f"A file:{fname}  time: {file_format_time} age in days: {delta_days.days}")
+
+        dayAgeToFilepath[delta_days].append(fname)
+
+    click.secho(f"Found map: {dayAgeToFilepath}", fg='yellow')
+
         # with open(fname, "r") as f:
 
 if __name__ == '__main__':
