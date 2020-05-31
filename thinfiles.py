@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from datetime import date
 from collections import defaultdict
+import pprint
 
 # print('\033[31m' + 'some red text')
 # sys.exit(1)
@@ -14,7 +15,7 @@ from collections import defaultdict
 def generateFilesPerDayForHalvingPattern(k, extend=False):
     if k < 1:
         return []
-        
+
     filesPerDay = []
 
     multiple = 1
@@ -91,15 +92,19 @@ def hello(deletefiles, filepattern):
 
         dayAgeToFilepath[delta_days].append(fname)
 
-    click.secho(f"Found map: {dayAgeToFilepath}", fg='yellow')
+    pp = pprint.PrettyPrinter(indent=4)
+    strr = pp.pformat(dayAgeToFilepath)
+    
+    click.secho(f"Found map: {strr}", fg='yellow')
 
         # with open(fname, "r") as f:
 
 if __name__ == '__main__':
+    print("MAIN. args=", sys.argv)
     # hack to call ourselves with some test arguments when run directly from sublime text without args
-    if sys.argv == 1:
+    if len(sys.argv) == 1:
         # os.system("python trimfiles.py 'testFiles/**/*.txt'")
-        os.system("python trimfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        os.system("python thinfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
     else:
         hello()
     # invoke(hello, args=['--filepattern', 'grimp'])

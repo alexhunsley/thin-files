@@ -25,9 +25,8 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
         self.assertEqual(generateFilesPerDayForHalvingPattern(1, extend=True), [1])
         self.assertEqual(generateFilesPerDayForHalvingPattern(0, extend=True), [])
 
-        print("IN TEST")
+
 if __name__ == '__main__':
     unittest.main()
-    print("IN TEST 2")
 
 
