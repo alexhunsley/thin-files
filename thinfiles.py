@@ -41,6 +41,8 @@ Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_ti
 # print(generateFilesPerDayForHalvingPattern(1, extend=True))
 # sys.exit(1)
 
+# TOMORROW: why is halving start count going in as extend param?!
+
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
 # @click.option("--name", prompt="Your name", help="The person to greet.")
@@ -53,6 +55,8 @@ Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_ti
 def hello(deletefiles, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
     """Thin out target files by maximum files per day. Typically used for backup or save files."""
 
+    print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
+
     print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
 
     # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
@@ -63,6 +67,9 @@ def hello(deletefiles, halving_start_count, extended_halving_start_count, max_fi
     # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
 
     if max_file_counts:
+        if halving_start_count != None:
+            raise click.UsageError(f"You must specify only one of --max-file-counts, --halving-start-count, or --extended-halving-start-count.")
+
         print("IN HERE")
         file_counts = max_file_counts.split(',')
 
@@ -138,6 +145,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         # os.system("python thinfiles.py 'testFiles/**/*.txt'")
         os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --max-file-counts '8,4,2,1' --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '-1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '1x,y' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
