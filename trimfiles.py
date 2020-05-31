@@ -4,6 +4,8 @@ import click
 from glob import glob
 import os
 import time
+from datetime import datetime
+from datetime import date
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
@@ -17,9 +19,12 @@ def hello(deletefiles, filepattern):
     It features cheese. and niceness. and kits."""
 
     tm = time.time()
-    formatTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tm))
+    now_date = date.fromtimestamp(tm)
+    click.secho(f"now date:{now_date}")
 
-    click.secho(f"curr time: {tm} {formatTime}")
+    localTime = time.localtime(tm)
+    formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
+    click.secho(f"curr time: {tm} {localTime} {formatTime}")
 
     if not "*" in filepattern:
         raise click.UsageError("File pattern must contain wildcard '*'")
@@ -42,8 +47,11 @@ def hello(deletefiles, filepattern):
         file_mod_local_time = time.localtime(file_mod_time)
         file_format_time = time.strftime('%Y-%m-%d %H:%M:%S', file_mod_local_time)
 
+        file_date = date.fromtimestamp(file_mod_time)
 
-        print(f"A file:{fname}  time: {file_format_time}")
+        delta_days = now_date - file_date
+
+        print(f"A file:{fname}  time: {file_format_time} age in days: {delta_days.days}")
         # with open(fname, "r") as f:
 
 if __name__ == '__main__':
