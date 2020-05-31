@@ -12,6 +12,9 @@ from collections import defaultdict
 # sys.exit(1)
 
 def generateFilesPerDayForHalvingPattern(k, extend=False):
+    if k < 1:
+        return []
+        
     filesPerDay = []
 
     multiple = 1
@@ -28,12 +31,12 @@ def generateFilesPerDayForHalvingPattern(k, extend=False):
 
     return filesPerDay
 
-print(generateFilesPerDayForHalvingPattern(8))
-print(generateFilesPerDayForHalvingPattern(7, extend=True))
-print(generateFilesPerDayForHalvingPattern(6, extend=True))
-print(generateFilesPerDayForHalvingPattern(5, extend=True))
-print(generateFilesPerDayForHalvingPattern(1, extend=True))
-sys.exit(1)
+# print(generateFilesPerDayForHalvingPattern(8))
+# print(generateFilesPerDayForHalvingPattern(7, extend=True))
+# print(generateFilesPerDayForHalvingPattern(6, extend=True))
+# print(generateFilesPerDayForHalvingPattern(5, extend=True))
+# print(generateFilesPerDayForHalvingPattern(1, extend=True))
+# sys.exit(1)
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
