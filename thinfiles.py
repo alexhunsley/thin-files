@@ -6,7 +6,7 @@ import os
 import time
 from datetime import datetime
 from datetime import date
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import pprint
 
 # print('\033[31m' + 'some red text')
@@ -32,6 +32,8 @@ def generateFilesPerDayForHalvingPattern(k, extend=False):
 
     return filesPerDay
 
+Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_time delta_days')
+
 # print(generateFilesPerDayForHalvingPattern(8))
 # print(generateFilesPerDayForHalvingPattern(7, extend=True))
 # print(generateFilesPerDayForHalvingPattern(6, extend=True))
@@ -44,11 +46,41 @@ def generateFilesPerDayForHalvingPattern(k, extend=False):
 # @click.option("--name", prompt="Your name", help="The person to greet.")
 # @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
 @click.option("--deletefiles", default=False)
+@click.option("--halving-start-count")
+@click.option("--extended-halving-start-count")
+@click.option("--max-file-counts")
 @click.argument("filepattern")
-def hello(deletefiles, filepattern):
-    """Simple program that greets NAME for a total of COUNT times.
+def hello(deletefiles, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
+    """Thin out target files by maximum files per day. Typically used for backup or save files."""
 
-    It features cheese. and niceness. and kits."""
+    print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
+
+    # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
+    # since the latter is false when it is an empty string.
+    if max_file_counts != None and len(max_file_counts) == 0:
+        raise click.UsageError(f"Empty string given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+    # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
+
+    if max_file_counts:
+        print("IN HERE")
+        file_counts = max_file_counts.split(',')
+
+        if not file_counts:
+            raise click.UsageError(f"Bad value given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+
+        try:
+            file_counts = [int(x) for x in file_counts]
+        except:
+            raise click.UsageError(f"Bad value '{max_file_counts}' given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+        for c in file_counts:
+            if c < 1:
+                raise click.UsageError(f"Bad value '{max_file_counts}' given in --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+
+        print(f"Got max file counts: {file_counts}")
 
     tm = time.time()
     now_date = date.fromtimestamp(tm)
@@ -56,6 +88,7 @@ def hello(deletefiles, filepattern):
 
     localTime = time.localtime(tm)
     formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
+
     click.secho(f"curr time: {tm} {localTime} {formatTime}")
 
     if not "*" in filepattern:
@@ -65,9 +98,6 @@ def hello(deletefiles, filepattern):
 
     if not deletefiles:
         click.secho("Since '--deletefiles true' was not given, I will show which files would normally be deleted, but take no action.\n", fg='green')
-
-    for _ in range(3):
-        click.echo(f"😄 Hello, {filepattern}")
 
     # UsageException("asdasd")
 
@@ -80,31 +110,38 @@ def hello(deletefiles, filepattern):
     dayAgeToFilepath = defaultdict(list)
 
     for fname in found_files:
+        # floating point time since epoch
+
         file_mod_time = os.path.getmtime(fname)
         file_mod_local_time = time.localtime(file_mod_time)
-        file_format_time = time.strftime('%Y-%m-%d %H:%M:%S', file_mod_local_time)
+        file_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', file_mod_local_time)
 
         file_date = date.fromtimestamp(file_mod_time)
 
         delta_days = now_date - file_date
 
-        print(f"A file:{fname}  time: {file_format_time} age in days: {delta_days.days}")
+        ft = Filetime(fname, file_mod_time, file_mod_local_time, file_formatted_time, delta_days)
 
-        dayAgeToFilepath[delta_days].append(fname)
+        # print(f"Found file: {ft}")
+
+        dayAgeToFilepath[delta_days].append(ft)
 
     pp = pprint.PrettyPrinter(indent=4)
     strr = pp.pformat(dayAgeToFilepath)
     
-    click.secho(f"Found map: {strr}", fg='yellow')
+    # click.secho(f"Found map: {strr}", fg='yellow')
 
         # with open(fname, "r") as f:
 
 if __name__ == '__main__':
-    print("MAIN. args=", sys.argv)
     # hack to call ourselves with some test arguments when run directly from sublime text without args
     if len(sys.argv) == 1:
-        # os.system("python trimfiles.py 'testFiles/**/*.txt'")
-        os.system("python thinfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py 'testFiles/**/*.txt'")
+        os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --max-file-counts '-1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --max-file-counts '1x,y' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --max-file-counts '' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
     else:
         hello()
     # invoke(hello, args=['--filepattern', 'grimp'])
