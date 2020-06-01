@@ -79,7 +79,6 @@ def parse_starting_count(starting_count_str, option_name):
 
     return starting_count
 
-
 # raise a UsageError if given options are not valid
 def validateAndParseOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
     modesSpecifiedCount = 0
@@ -104,7 +103,6 @@ def validateAndParseOptions(halving_start_count, extended_halving_start_count, m
 
     if not "*" in filepattern:
         raise click.UsageError("File pattern must contain wildcard '*'. Examples: '*.txt', '**/log*.txt'")
-
 
     file_counts_per_day = None
 
@@ -165,6 +163,14 @@ def find_files(filepattern, today_date):
 
 def files_for_deletion(day_age_to_filetimes, file_counts_per_day):
     return day_age_to_filetimes
+
+
+# THIS IS THE FUNC YOU CAN NOW WRITE TESTS FOR
+def find_files_to_delete(found_files_modtimes, file_counts_per_day, today_date):
+    day_age_to_filetimes = file_times_map(found_files_modtimes, today_date)
+    day_age_to_filetimes_for_deletion = files_for_deletion(day_age_to_filetimes, file_counts_per_day)
+
+    return day_age_to_filetimes_for_deletion
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
@@ -236,21 +242,18 @@ def thinfiles(delete_files, halving_start_count, extended_halving_start_count, m
     #day_age_to_filetimes = 
     found_files_modtimes = find_files(filepattern, today_date)
 
-    day_age_to_filetimes = file_times_map(found_files_modtimes, today_date)
+    # put next two calls into a def, so we can then call it from tests too
+    # day_age_to_filetimes = file_times_map(found_files_modtimes, today_date)
+    # day_age_to_filetimes_for_deletion = files_for_deletion(day_age_to_filetimes, file_counts_per_day)
 
-    day_age_to_filetimes_for_deletion = files_for_deletion(day_age_to_filetimes, file_counts_per_day)
-
+    day_age_to_filetimes_for_deletion = find_files_to_delete(found_files_modtimes, file_counts_per_day, today_date)
     # files_to_delete_map = files_to_delete(files_map, )
 
     pp = pprint.PrettyPrinter(indent=4)
-    strr = pp.pformat(day_age_to_filetimes)
+    strr = pp.pformat(day_age_to_filetimes_for_deletion)
     
     click.secho(f"Found map: {strr}", fg='yellow')
 
-    strr = pp.pformat(day_age_to_filetimes_for_deletion)
-    click.secho(f"----------------------------------------------------------------\nFor deletion, found map: {strr}", fg='yellow')
-
-        # with open(fname, "r") as f:
 
 if __name__ == '__main__':
     # hack to call ourselves with some test arguments when run directly from sublime text without args
