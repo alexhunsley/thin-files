@@ -10,6 +10,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        thinfiles=thinfiles:hello
+        thinfiles=thinfiles:thinfiles
     ''',
 )

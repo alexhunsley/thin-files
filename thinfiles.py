@@ -117,32 +117,7 @@ def validateAndParseOptions(halving_start_count, extended_halving_start_count, m
 
     return file_counts_per_day
 
-@click.command()
-# @click.option("--count", default=1, help="Number of greetings.")
-# @click.option("--name", prompt="Your name", help="The person to greet.")
-# @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
-@click.option("--deletefiles", default=False)
-@click.option("--halving-start-count")
-@click.option("--extended-halving-start-count")
-@click.option("--max-file-counts")
-@click.argument("filepattern")
-def thinfiles(deletefiles, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
-    """Thin out target files by maximum files per day. Typically used for backup or save files."""
-
-    print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
-
-    print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
-
-    file_counts_per_day = validateAndParseOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern)
-
-
-    # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
-
-
-    print(f"File counts per day: {file_counts_per_day}")
-
-    sys.exit(0)
-
+def find_files(filepattern):
     tm = time.time()
     now_date = date.fromtimestamp(tm)
     click.secho(f"now date:{now_date}")
@@ -150,16 +125,7 @@ def thinfiles(deletefiles, halving_start_count, extended_halving_start_count, ma
     localTime = time.localtime(tm)
     formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
 
-    click.secho(f"curr time: {tm} {localTime} {formatTime}")
-
-    click.secho("")
-
-    if not deletefiles:
-        click.secho("Since '--deletefiles true' was not given, I will show which files would normally be deleted, but take no action.\n", fg='green')
-
-    # UsageException("asdasd")
-
-    print("Del files:", deletefiles)
+    #########
 
     found_files = glob(filepattern, recursive=True)
 
@@ -184,10 +150,51 @@ def thinfiles(deletefiles, halving_start_count, extended_halving_start_count, ma
 
         dayAgeToFilepath[delta_days].append(ft)
 
+    return dayAgeToFilepath
+
+@click.command()
+# @click.option("--count", default=1, help="Number of greetings.")
+# @click.option("--name", prompt="Your name", help="The person to greet.")
+# @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
+# @click.option("--delete-files", count=True)
+
+@click.option("--delete-files", 'delete_files', flag_value='true', default=False, help='You must supply this flag for the script to delete any files. If omitted, details of which files would have been deleted is outpput.')
+@click.option("--halving-start-count", help="An integer >0 which seeds a halving file count. For example, giving '4' results in daily file counts [4, 2, 1].")
+@click.option("--extended-halving-start-count", help="An integer >0 which seeds an extended halving file count. For example, giving '4' results in daily file counts [4, 2, 2, 1, 1, 1, 1].")
+@click.option("--max-file-counts", help="A comma separated list of integers >0 which specifies daily files counts. For example '10,10,4,2'.")
+@click.argument("filepattern")
+def thinfiles(delete_files, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
+    """Thin out target files by keeping a maximum number of files per day; the remainder are deleted.
+    Typically used for thinning backup or save files.
+
+    FILEPATTERN is a wildcard file pattern, e.g. 'someDir/*.txt' or '**/*.log'.
+    """
+
+    # print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
+    # print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
+
+    file_counts_per_day = validateAndParseOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern)
+
+
+    # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
+    print(f"File counts per day: {file_counts_per_day}")
+
+    # click.secho(f"curr time: {tm} {localTime} {formatTime}")
+    # click.secho("")
+
+    print("DEL FILES:",delete_files)
+    if delete_files != "true":
+        click.secho("Since '--deletefiles true' was not given, I will show which files would normally be deleted, but take no action.\n", fg='green')
+
+    # UsageException("asdasd")
+
+
+    day_age_to_filetimes = find_files(filepattern)
+
     pp = pprint.PrettyPrinter(indent=4)
-    strr = pp.pformat(dayAgeToFilepath)
+    strr = pp.pformat(day_age_to_filetimes)
     
-    # click.secho(f"Found map: {strr}", fg='yellow')
+    click.secho(f"Found map: {strr}", fg='yellow')
 
         # with open(fname, "r") as f:
 
@@ -198,7 +205,8 @@ if __name__ == '__main__':
         # os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '8,4,2,1' --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --halving-start-count 4 --extended-halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
-        os.system("python thinfiles.py --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --delete-files --halving-start-count 4 'testFiles/**/*.txt'")
+        os.system("python thinfiles.py --halving-start-count 4 'testFiles/**/*.txt'")
         # os.system("python thinfiles.py --extended-halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '-1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '1x,y' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
