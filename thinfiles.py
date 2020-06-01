@@ -117,15 +117,10 @@ def validateAndParseOptions(halving_start_count, extended_halving_start_count, m
 
     return file_counts_per_day
 
-def find_files(filepattern):
-    tm = time.time()
-    now_date = date.fromtimestamp(tm)
-    click.secho(f"now date:{now_date}")
-
-    localTime = time.localtime(tm)
-    formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
-
-    #########
+def find_files(filepattern, today_date):
+    # tm = time.time()	
+    # localTime = time.localtime(tm)
+    # formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
 
     found_files = glob(filepattern, recursive=True)
 
@@ -142,7 +137,7 @@ def find_files(filepattern):
 
         file_date = date.fromtimestamp(file_mod_time)
 
-        delta_days = now_date - file_date
+        delta_days = today_date - file_date
 
         ft = Filetime(fname, file_mod_time, file_mod_local_time, file_formatted_time, delta_days)
 
@@ -215,7 +210,11 @@ def thinfiles(delete_files, halving_start_count, extended_halving_start_count, m
     if delete_files != "true":
         click.secho("Since '--deletefiles true' was not given, I will show which files would normally be deleted, but take no action.\n", fg='green')
 
-    day_age_to_filetimes = find_files(filepattern)
+    tm = time.time()
+    today_date = date.fromtimestamp(tm)
+    click.secho(f"now date:{today_date}")
+
+    day_age_to_filetimes = find_files(filepattern, today_date)
 
     pp = pprint.PrettyPrinter(indent=4)
     strr = pp.pformat(day_age_to_filetimes)
