@@ -1,9 +1,12 @@
 import unittest
+import click
 
 target = __import__("thinfiles")
 
 generateFilesPerDayForHalvingPattern = target.generateFilesPerDayForHalvingPattern
 #print(generateFilesPerDayForHalvingPattern)
+
+# test script as a whole (by executing whole thing), or internals?
 
 class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
     def test_gen(self):
@@ -25,6 +28,18 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
         self.assertEqual(generateFilesPerDayForHalvingPattern(1, extend=True), [1])
         self.assertEqual(generateFilesPerDayForHalvingPattern(0, extend=True), [])
 
+    def test_raise(self):
+    	# params 3 onwards: halving_start_count, extended_halving_start_count, max_file_counts, filepattern
+    	# self.assertRaises(click.UsageError, target.validateOptions, None, None, "x4,2,1", "*.txt")
+
+    	# options which try to configuire >1 mode
+    	self.assertRaises(click.UsageError, target.validateOptions, "9", "10", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateOptions, "2", None, "4,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateOptions, "2", "1", "4,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateOptions, None, "1", "4,2,1", "*.txt")
+
+    def test_doesnt_raise(self):
+    	target.validateOptions(None, None, "4,2,1", "*.txt")
 
 if __name__ == '__main__':
     unittest.main()

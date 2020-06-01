@@ -43,6 +43,64 @@ Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_ti
 
 # TOMORROW: why is halving start count going in as extend param?!
 
+# raise a UsageError if given options are not valid
+def validateOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
+    modesSpecifiedCount = 0
+    if max_file_counts != None:
+        modesSpecifiedCount += 1
+    
+    if halving_start_count != None:
+        modesSpecifiedCount += 1
+
+    if extended_halving_start_count != None:
+        modesSpecifiedCount += 1
+
+    if modesSpecifiedCount > 1:
+        raise click.UsageError(f"You must specify only one of --max-file-counts, --halving-start-count, or --extended-halving-start-count.")
+
+    # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
+    # since the latter is false when it is an empty string.
+    if max_file_counts != None and len(max_file_counts) == 0:
+        raise click.UsageError(f"Empty string given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+
+# raises a UsageError if given params not valid
+def parse_max_file_counts(max_file_counts):
+    file_counts = max_file_counts.split(',')
+
+    if not file_counts:
+        raise click.UsageError(f"Bad value given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+    try:
+        file_counts = [int(x) for x in file_counts]
+    except:
+        raise click.UsageError(f"Bad value '{max_file_counts}' given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+    for c in file_counts:
+        if c < 1:
+            raise click.UsageError(f"Bad value '{max_file_counts}' given in --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+
+    print(f"Got max file counts: {file_counts}")
+    return file_counts
+
+def parse_starting_count(starting_count_str, option_name):
+    raiseError = False
+
+    try:
+        starting_count = int(starting_count_str)
+        assert(starting_count > 0)
+    except:
+        raiseError = True
+
+    # if starting_count < 1:
+    #     raiseError = True
+
+    if raiseError:
+        raise click.UsageError(f"Bad starting count value '{starting_count_str}' given for {option_name}. It be should an integer > 0.")
+
+
+    return starting_count
+
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
 # @click.option("--name", prompt="Your name", help="The person to greet.")
@@ -59,35 +117,25 @@ def hello(deletefiles, halving_start_count, extended_halving_start_count, max_fi
 
     print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
 
-    # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
-    # since the latter is false when it is an empty string.
-    if max_file_counts != None and len(max_file_counts) == 0:
-        raise click.UsageError(f"Empty string given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
+    validateOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern)
+
 
     # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
 
+    file_counts_per_day = None
+
     if max_file_counts:
-        if halving_start_count != None:
-            raise click.UsageError(f"You must specify only one of --max-file-counts, --halving-start-count, or --extended-halving-start-count.")
+        file_counts_per_day = parse_max_file_counts(max_file_counts)
+    elif halving_start_count:
+        start_files_per_day_value = parse_starting_count(halving_start_count, "--halving-start-count")
+        file_counts_per_day = generateFilesPerDayForHalvingPattern(start_files_per_day_value)
+    else:
+        start_files_per_day_value = parse_starting_count(extended_halving_start_count, "--extended-halving-start-count")
+        file_counts_per_day = generateFilesPerDayForHalvingPattern(start_files_per_day_value, extend=True)
 
-        print("IN HERE")
-        file_counts = max_file_counts.split(',')
+    print(f"File counts per day: {file_counts_per_day}")
 
-        if not file_counts:
-            raise click.UsageError(f"Bad value given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
-
-
-        try:
-            file_counts = [int(x) for x in file_counts]
-        except:
-            raise click.UsageError(f"Bad value '{max_file_counts}' given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
-
-        for c in file_counts:
-            if c < 1:
-                raise click.UsageError(f"Bad value '{max_file_counts}' given in --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
-
-
-        print(f"Got max file counts: {file_counts}")
+    sys.exit(0)
 
     tm = time.time()
     now_date = date.fromtimestamp(tm)
@@ -144,8 +192,11 @@ if __name__ == '__main__':
     # hack to call ourselves with some test arguments when run directly from sublime text without args
     if len(sys.argv) == 1:
         # os.system("python thinfiles.py 'testFiles/**/*.txt'")
-        os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '8,4,2,1' --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --halving-start-count 4 --extended-halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --halving-start-count 10 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        os.system("python thinfiles.py --extended-halving-start-count 1 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '-1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '1x,y' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
