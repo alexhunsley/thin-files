@@ -28,18 +28,64 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
         self.assertEqual(generateFilesPerDayForHalvingPattern(1, extend=True), [1])
         self.assertEqual(generateFilesPerDayForHalvingPattern(0, extend=True), [])
 
-    def test_raise(self):
+    def test_raise_on_multiple_mode_configurations(self):
     	# params 3 onwards: halving_start_count, extended_halving_start_count, max_file_counts, filepattern
     	# self.assertRaises(click.UsageError, target.validateOptions, None, None, "x4,2,1", "*.txt")
 
-    	# options which try to configuire >1 mode
-    	self.assertRaises(click.UsageError, target.validateOptions, "9", "10", None, "*.txt")
-    	self.assertRaises(click.UsageError, target.validateOptions, "2", None, "4,2,1", "*.txt")
-    	self.assertRaises(click.UsageError, target.validateOptions, "2", "1", "4,2,1", "*.txt")
-    	self.assertRaises(click.UsageError, target.validateOptions, None, "1", "4,2,1", "*.txt")
+    	# options which try to configure 0 or > 1 modes
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "9", "10", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "2", None, "4,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "1", "4,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "2", "1", "4,2,1", "*.txt")
+
+    def test_raise_on_badly_formatted_configurations(self):
+    	# bad file counts per day
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "0", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "-1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "-9999991", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "1,0", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "6,-2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "x4,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "4x,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "y,2,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "8,hello,1", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "8,1,bye_", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, ",", "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, ",,,,", "*.txt")
+
+    	# halving config
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "", None, None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "0", None, None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "-1", None, None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "2,1", None, None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, "10,2,1", None, None, "*.txt")
+
+    	# extended halving config
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "0", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "-1", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "2,1", None, "*.txt")
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, "10,2,1", None, "*.txt")
+
+    def test_raise_on_bad_file_pattern(self):
+    	self.assertRaises(click.UsageError, target.validateAndParseOptions, None, None, "8,4", "hello.txt")
+
 
     def test_doesnt_raise(self):
-    	target.validateOptions(None, None, "4,2,1", "*.txt")
+    	target.validateAndParseOptions(None, None, "1", "*.txt")
+    	target.validateAndParseOptions(None, None, "1 ", "*.txt")
+    	target.validateAndParseOptions(None, None, " 1 ", "*.txt")
+    	target.validateAndParseOptions(None, None, " 1", "*.txt")
+    	target.validateAndParseOptions(None, None, " 1, 4,   10 ", "*.txt")
+    	target.validateAndParseOptions(None, None, "4,2", "*.txt")
+    	target.validateAndParseOptions(None, None, "4,2,1", "*.txt")
+    	target.validateAndParseOptions(None, None, "4,2,1", "*.txt")
+    	target.validateAndParseOptions(None, None, "4,2,1", "**/*.txt")
+    	target.validateAndParseOptions(None, None, "4,2,1", "someDir/**/*.txt")
+
+    	target.validateAndParseOptions("16", None, None, "*.txt")
+    	target.validateAndParseOptions("16", None, None, "*.txt")
 
 if __name__ == '__main__':
     unittest.main()

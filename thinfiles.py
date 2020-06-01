@@ -41,29 +41,6 @@ Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_ti
 # print(generateFilesPerDayForHalvingPattern(1, extend=True))
 # sys.exit(1)
 
-# TOMORROW: why is halving start count going in as extend param?!
-
-# raise a UsageError if given options are not valid
-def validateOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
-    modesSpecifiedCount = 0
-    if max_file_counts != None:
-        modesSpecifiedCount += 1
-    
-    if halving_start_count != None:
-        modesSpecifiedCount += 1
-
-    if extended_halving_start_count != None:
-        modesSpecifiedCount += 1
-
-    if modesSpecifiedCount > 1:
-        raise click.UsageError(f"You must specify only one of --max-file-counts, --halving-start-count, or --extended-halving-start-count.")
-
-    # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
-    # since the latter is false when it is an empty string.
-    if max_file_counts != None and len(max_file_counts) == 0:
-        raise click.UsageError(f"Empty string given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
-
-
 # raises a UsageError if given params not valid
 def parse_max_file_counts(max_file_counts):
     file_counts = max_file_counts.split(',')
@@ -98,29 +75,34 @@ def parse_starting_count(starting_count_str, option_name):
     if raiseError:
         raise click.UsageError(f"Bad starting count value '{starting_count_str}' given for {option_name}. It be should an integer > 0.")
 
-
     return starting_count
 
-@click.command()
-# @click.option("--count", default=1, help="Number of greetings.")
-# @click.option("--name", prompt="Your name", help="The person to greet.")
-# @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
-@click.option("--deletefiles", default=False)
-@click.option("--halving-start-count")
-@click.option("--extended-halving-start-count")
-@click.option("--max-file-counts")
-@click.argument("filepattern")
-def hello(deletefiles, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
-    """Thin out target files by maximum files per day. Typically used for backup or save files."""
 
-    print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
+# raise a UsageError if given options are not valid
+def validateAndParseOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
+    modesSpecifiedCount = 0
+    if max_file_counts != None:
+        modesSpecifiedCount += 1
+    
+    if halving_start_count != None:
+        modesSpecifiedCount += 1
 
-    print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
+    if extended_halving_start_count != None:
+        modesSpecifiedCount += 1
 
-    validateOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern)
+    if modesSpecifiedCount != 1:
+        raise click.UsageError(f"You must specify only one of --max-file-counts, --halving-start-count, or --extended-halving-start-count.")
+
+    # we must if max_file_counts != None' in first condition below, and not just 'if max_file_counts',
+    # since the latter is false when it is an empty string.
+    if max_file_counts != None and len(max_file_counts) == 0:
+        raise click.UsageError(f"Empty string given for --max-file-counts. It be should a comma separated list of integers > 0, for example '4,2,1'.")
 
 
-    # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
+
+    if not "*" in filepattern:
+        raise click.UsageError("File pattern must contain wildcard '*'. Examples: '*.txt', '**/log*.txt'")
+
 
     file_counts_per_day = None
 
@@ -132,6 +114,30 @@ def hello(deletefiles, halving_start_count, extended_halving_start_count, max_fi
     else:
         start_files_per_day_value = parse_starting_count(extended_halving_start_count, "--extended-halving-start-count")
         file_counts_per_day = generateFilesPerDayForHalvingPattern(start_files_per_day_value, extend=True)
+
+    return file_counts_per_day
+
+@click.command()
+# @click.option("--count", default=1, help="Number of greetings.")
+# @click.option("--name", prompt="Your name", help="The person to greet.")
+# @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
+@click.option("--deletefiles", default=False)
+@click.option("--halving-start-count")
+@click.option("--extended-halving-start-count")
+@click.option("--max-file-counts")
+@click.argument("filepattern")
+def thinfiles(deletefiles, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
+    """Thin out target files by maximum files per day. Typically used for backup or save files."""
+
+    print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
+
+    print("MFC:", max_file_counts, "end isNone:", max_file_counts == None)
+
+    file_counts_per_day = validateAndParseOptions(halving_start_count, extended_halving_start_count, max_file_counts, filepattern)
+
+
+    # print(f"qwqw: {max_file_counts}X {len(max_file_counts)}")
+
 
     print(f"File counts per day: {file_counts_per_day}")
 
@@ -145,9 +151,6 @@ def hello(deletefiles, halving_start_count, extended_halving_start_count, max_fi
     formatTime = time.strftime('%Y-%m-%d %H:%M:%S', localTime)
 
     click.secho(f"curr time: {tm} {localTime} {formatTime}")
-
-    if not "*" in filepattern:
-        raise click.UsageError("File pattern must contain wildcard '*'")
 
     click.secho("")
 
@@ -195,12 +198,12 @@ if __name__ == '__main__':
         # os.system("python thinfiles.py --max-file-counts '8,4,2,1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '8,4,2,1' --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --halving-start-count 4 --extended-halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
-        # os.system("python thinfiles.py --halving-start-count 10 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
-        os.system("python thinfiles.py --extended-halving-start-count 1 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        os.system("python thinfiles.py --halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
+        # os.system("python thinfiles.py --extended-halving-start-count 4 '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '-1' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '1x,y' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py --max-file-counts '' '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
         # os.system("python thinfiles.py '/Users/alexhunsley/Dropbox/Apps/Quine/main/main.html_backup/*.html'")
     else:
-        hello()
+        thinfiles()
     # invoke(hello, args=['--filepattern', 'grimp'])
