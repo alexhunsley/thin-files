@@ -34,6 +34,8 @@ def generateFilesPerDayForHalvingPattern(k, extend=False):
 
 Filetime = namedtuple('Filetime', 'filename mod_time local_mod_time formatted_time delta_days')
 
+Filemodtime = namedtuple('Filetime', 'filename mod_time')
+
 # print(generateFilesPerDayForHalvingPattern(8))
 # print(generateFilesPerDayForHalvingPattern(7, extend=True))
 # print(generateFilesPerDayForHalvingPattern(6, extend=True))
@@ -117,6 +119,29 @@ def validateAndParseOptions(halving_start_count, extended_halving_start_count, m
 
     return file_counts_per_day
 
+def file_times_map(found_files_modtimes, today_date):
+    dayAgeToFilepath = defaultdict(list)
+
+    for f_mod_time in found_files_modtimes:
+        file_mod_time = os.path.getmtime(f_mod_time.filename)
+
+        file_mod_local_time = time.localtime(file_mod_time)
+        
+        file_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', file_mod_local_time)
+
+        file_date = date.fromtimestamp(file_mod_time)
+
+        delta_days = today_date - file_date
+
+        ft = Filetime(f_mod_time.filename, file_mod_time, file_mod_local_time, file_formatted_time, delta_days)
+
+        # print(f"Found file: {ft}")
+
+        dayAgeToFilepath[delta_days].append(ft)
+
+    return dayAgeToFilepath
+
+# string, date
 def find_files(filepattern, today_date):
     # tm = time.time()	
     # localTime = time.localtime(tm)
@@ -126,26 +151,18 @@ def find_files(filepattern, today_date):
 
     found_files.sort(key=os.path.getmtime, reverse=True)
 
-    dayAgeToFilepath = defaultdict(list)
+    found_files_modtimes = []
 
     for fname in found_files:
+        f_mod_time = os.path.getmtime(fname)
+
+        file_mod_time = Filemodtime(fname, f_mod_time)
+
+        found_files_modtimes.append(file_mod_time)
+        ###########
+
+    return file_times_map(found_files_modtimes, today_date)
         # floating point time since epoch
-
-        file_mod_time = os.path.getmtime(fname)
-        file_mod_local_time = time.localtime(file_mod_time)
-        file_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', file_mod_local_time)
-
-        file_date = date.fromtimestamp(file_mod_time)
-
-        delta_days = today_date - file_date
-
-        ft = Filetime(fname, file_mod_time, file_mod_local_time, file_formatted_time, delta_days)
-
-        # print(f"Found file: {ft}")
-
-        dayAgeToFilepath[delta_days].append(ft)
-
-    return dayAgeToFilepath
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
