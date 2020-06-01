@@ -158,16 +158,45 @@ def find_files(filepattern):
 # @click.option("--filepattern", required=True, help="File glob for target files, e.g. backup*.tar")
 # @click.option("--delete-files", count=True)
 
-@click.option("--delete-files", 'delete_files', flag_value='true', default=False, help='You must supply this flag for the script to delete any files. If omitted, details of which files would have been deleted is outpput.')
+@click.option("--delete-files", 'delete_files', flag_value='true', default=False, help='You must supply this flag for the script to delete any files. If omitted, details of which files would have been deleted is output.')
 @click.option("--halving-start-count", help="An integer >0 which seeds a halving file count. For example, giving '4' results in daily file counts [4, 2, 1].")
 @click.option("--extended-halving-start-count", help="An integer >0 which seeds an extended halving file count. For example, giving '4' results in daily file counts [4, 2, 2, 1, 1, 1, 1].")
 @click.option("--max-file-counts", help="A comma separated list of integers >0 which specifies daily files counts. For example '10,10,4,2'.")
 @click.argument("filepattern")
 def thinfiles(delete_files, halving_start_count, extended_halving_start_count, max_file_counts, filepattern):
-    """Thin out target files by keeping a maximum number of files per day; the remainder are deleted.
-    Typically used for thinning backup or save files.
+    """Thin out matched files by deleting all except a given number of files per day.
+    Typically used for thinning backup or log files.
 
     FILEPATTERN is a wildcard file pattern, e.g. 'someDir/*.txt' or '**/*.log'.
+
+    As a precaution, this script as a priority will never delete:
+
+      * files with today's date
+    
+      * the most recent two files, no matter what their date
+
+    Examples:
+
+      thinfiles --delete-files --max-file-counts 5,2,1 myLogs/*.txt
+
+      -- deletes all files matching the pattern except for 5 files yesterday, 2 files the day before, and 1 file the day before that. All matching files earlier than that are deleted.
+
+      thinfiles --delete-files --max-file-counts x,x,4,2 myLogs/*.txt
+
+      -- doesn't delete any files for yesterday and the day before (note the use of 'x' for this). The day before that, deletes all matching files except for 2; and the day before that, deletes all matching files except for 2. All matching files earlier than that are deleted.
+
+      thinfiles --delete-files --max-file-counts 5,2,1... myLogs/*.txt
+
+      -- deletes all matching files except for 5 files yesterday, 2 files the day before, and 1 file for ALL days before that (note the suffix '...').
+
+      thinfiles --delete-files --halving-start-count 16 myLogs/*.txt
+
+      -- deletes all matching files except for those given by a generated max-file-counts of [16, 8, 4, 2, 1].
+
+      thinfiles --delete-files --extended-halving-start-count 8 myLogs/*.txt
+
+      -- deletes all matching files except for those given by a generated max-file-counts of [8, 4, 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1].
+
     """
 
     # print("Halving:", halving_start_count, " ext halving:", extended_halving_start_count)
@@ -185,9 +214,6 @@ def thinfiles(delete_files, halving_start_count, extended_halving_start_count, m
     print("DEL FILES:",delete_files)
     if delete_files != "true":
         click.secho("Since '--deletefiles true' was not given, I will show which files would normally be deleted, but take no action.\n", fg='green')
-
-    # UsageException("asdasd")
-
 
     day_age_to_filetimes = find_files(filepattern)
 
