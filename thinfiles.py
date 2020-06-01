@@ -161,8 +161,10 @@ def find_files(filepattern, today_date):
         found_files_modtimes.append(file_mod_time)
         ###########
 
-    return file_times_map(found_files_modtimes, today_date)
-        # floating point time since epoch
+    return found_files_modtimes    
+
+def files_for_deletion(day_age_to_filetimes, file_counts_per_day):
+    return day_age_to_filetimes
 
 @click.command()
 # @click.option("--count", default=1, help="Number of greetings.")
@@ -231,12 +233,22 @@ def thinfiles(delete_files, halving_start_count, extended_halving_start_count, m
     today_date = date.fromtimestamp(tm)
     click.secho(f"now date:{today_date}")
 
-    day_age_to_filetimes = find_files(filepattern, today_date)
+    #day_age_to_filetimes = 
+    found_files_modtimes = find_files(filepattern, today_date)
+
+    day_age_to_filetimes = file_times_map(found_files_modtimes, today_date)
+
+    day_age_to_filetimes_for_deletion = files_for_deletion(day_age_to_filetimes, file_counts_per_day)
+
+    # files_to_delete_map = files_to_delete(files_map, )
 
     pp = pprint.PrettyPrinter(indent=4)
     strr = pp.pformat(day_age_to_filetimes)
     
     click.secho(f"Found map: {strr}", fg='yellow')
+
+    strr = pp.pformat(day_age_to_filetimes_for_deletion)
+    click.secho(f"----------------------------------------------------------------\nFor deletion, found map: {strr}", fg='yellow')
 
         # with open(fname, "r") as f:
 
