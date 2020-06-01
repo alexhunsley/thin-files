@@ -137,7 +137,7 @@ def file_times_map(found_files_modtimes, today_date):
 
         # print(f"Found file: {ft}")
 
-        dayAgeToFilepath[delta_days].append(ft)
+        dayAgeToFilepath[delta_days.days].append(ft)
 
     return dayAgeToFilepath
 
