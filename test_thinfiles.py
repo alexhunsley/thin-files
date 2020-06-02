@@ -1,7 +1,11 @@
 import unittest
 import click
+import time
+from datetime import date, datetime
+import pprint
 
 target = __import__("thinfiles")
+
 
 generateFilesPerDayForHalvingPattern = target.generateFilesPerDayForHalvingPattern
 #print(generateFilesPerDayForHalvingPattern)
@@ -86,6 +90,39 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
 
     	target.validateAndParseOptions("16", None, None, "*.txt")
     	target.validateAndParseOptions("16", None, None, "*.txt")
+
+    def test_file_filtering(self):
+        a = target.Filemodtime('testFiles/a/aa/aa1.txt', 1590901392)
+       # [Filetime(filename='testFiles/a/aa/aa1.txt', mod_time=1590901392.1799085), Filetime(filename='testFiles/b/b1.txt', mod_time=1590901148.700443), Filetime(filename='testFiles/a/a2.txt', mod_time=1590901143.041299), Filetime(filename='testFiles/a/a1.txt', mod_time=1590901140.5715384), Filetime(filename='testFiles/1.txt', mod_time=1590901135.9636014), Filetime(filename='testFiles/LICENSE.txt', mod_time=1517324806.379325)]
+        file_mod_times = [
+                          target.Filemodtime('testFiles/a/aa/aa1.txt', 1590901392), 
+                          target.Filemodtime('testFiles/b/b1.txt', 1590901148), 
+                          target.Filemodtime('testFiles/a/a2.txt', 1590901143),
+                          target.Filemodtime('testFiles/a/a1.txt', 1590901140)
+                          ]
+
+        # tm = time.time()
+
+        # epoch time for midnight (first second) on 2020-06-01
+        tm = 1590969600
+
+        # because the file mod times are epoch seconds, i.e. timezone agnostic and equal to UTC, we must make
+        # sure we calc the today date object not using any timezone - so use utcfromtimestamp
+        today_datetime = datetime.utcfromtimestamp(tm)
+        today_date = today_datetime.date()
+
+        print(f"made today_datetime: {today_datetime}")
+        # is +1 hr as expected
+        # print(f"made today_datetime for timezone: {datetime.fromtimestamp(tm)}")
+
+        file_counts_per_day = [4, 2, 1]
+
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(target.find_files_to_delete(file_mod_times, file_counts_per_day, today_date))
+
+        print("resulto: ")
+
+        pp.pprint(target.find_files_to_delete(file_mod_times, file_counts_per_day, today_date))
 
 if __name__ == '__main__':
     unittest.main()

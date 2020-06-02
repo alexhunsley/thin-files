@@ -166,7 +166,12 @@ def files_for_deletion(day_age_to_filetimes, file_counts_per_day):
 
 
 # THIS IS THE FUNC YOU CAN NOW WRITE TESTS FOR
+# params: Filemodtime[], int[], date
 def find_files_to_delete(found_files_modtimes, file_counts_per_day, today_date):
+    print(f"XXXXX   found_files_modtimes: {found_files_modtimes}")
+    print(f"XXXXX   file_counts_per_day: {file_counts_per_day}")
+    print(f"XXXXX   today_date: {today_date}")
+    
     day_age_to_filetimes = file_times_map(found_files_modtimes, today_date)
     day_age_to_filetimes_for_deletion = files_for_deletion(day_age_to_filetimes, file_counts_per_day)
 
