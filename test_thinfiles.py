@@ -3,6 +3,7 @@ import click
 import time
 from datetime import date, datetime
 import pprint
+import calendar
 
 target = __import__("thinfiles")
 
@@ -92,23 +93,30 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
     	target.validateAndParseOptions("16", None, None, "*.txt")
 
     def test_file_filtering(self):
-        a = target.Filemodtime('testFiles/a/aa/aa1.txt', 1590901392)
        # [Filetime(filename='testFiles/a/aa/aa1.txt', mod_time=1590901392.1799085), Filetime(filename='testFiles/b/b1.txt', mod_time=1590901148.700443), Filetime(filename='testFiles/a/a2.txt', mod_time=1590901143.041299), Filetime(filename='testFiles/a/a1.txt', mod_time=1590901140.5715384), Filetime(filename='testFiles/1.txt', mod_time=1590901135.9636014), Filetime(filename='testFiles/LICENSE.txt', mod_time=1517324806.379325)]
+        
+        # IMPORTANT: these Filemodtime tuples must be in newest to oldest order.
+        # find_files_to_delete assumes that.
+        # (TODO move the recent->oldest sorting into find_files_to_delete? makes sense.)
         file_mod_times = [
-                          target.Filemodtime('testFiles/a/aa/aa1.txt', 1590901392), 
-                          target.Filemodtime('testFiles/b/b1.txt', 1590901148), 
-                          target.Filemodtime('testFiles/a/a2.txt', 1590901143),
-                          target.Filemodtime('testFiles/a/a1.txt', 1590901140)
-                          ]
+                          target.Filemodtime('testFiles/a/aa/aa1.txt', parseDatetimeStringToEpoch("1970-01-01T00:00:00")), 
 
+                          # target.Filemodtime('testFiles/a/aa/aa1.txt', parseDatetimeStringToEpoch("2020-05-31T09:00:00")), 
+                          # target.Filemodtime('testFiles/b/b1.txt',     parseDatetimeStringToEpoch("2020-05-31T08:00:00")),
+                          # target.Filemodtime('testFiles/a/a2.txt',     parseDatetimeStringToEpoch("2020-05-31T07:00:00")),
+                          # target.Filemodtime('testFiles/a/a1.txt',     parseDatetimeStringToEpoch("2020-05-31T06:00:00"))
+                          ]
+ 
         # tm = time.time()
 
-        # epoch time for midnight (first second) on 2020-06-01
-        tm = 1590969600
+        # epoch time for midday on 2020-06-01
+        # tm = 1590969600
+        tm = parseDatetimeStringToEpoch("2020-06-01T14:00:00")
 
-        # because the file mod times are epoch seconds, i.e. timezone agnostic and equal to UTC, we must make
-        # sure we calc the today date object not using any timezone - so use utcfromtimestamp
-        today_datetime = datetime.utcfromtimestamp(tm)
+        print(f"F:", time.mktime(time.gmtime()) - time.mktime(time.localtime()))
+        print(f"F2: ", time.gmtime(), time.localtime())
+        
+        today_datetime = datetime.fromtimestamp(tm)
         today_date = today_datetime.date()
 
         print(f"made today_datetime: {today_datetime}")
@@ -124,7 +132,20 @@ class TestGenFilesPerDayForHalvingPattern(unittest.TestCase):
 
         pp.pprint(target.find_files_to_delete(file_mod_times, file_counts_per_day, today_date))
 
+def parseDatetimeStringToEpoch(datetimeString):
+    # returns time.struct_time
+    # utc_time = time.strptime(datetimeString, "%Y-%m-%dT%H:%M:%S %Z")
+    utc_time = time.strptime(datetimeString, "%Y-%m-%dT%H:%M:%S")
+
+    # epoch_time = calendar.timegm(utc_time)
+    epoch_time = int(time.mktime(utc_time))
+    print(f"made epoch {epoch_time}, utc time {utc_time} from {datetimeString}")
+
+
+    return epoch_time
+
 if __name__ == '__main__':
+    # doober = parseDatetimeStringToEpoch("2020-06-01T00:00:00.000Z")
     unittest.main()
 
 
